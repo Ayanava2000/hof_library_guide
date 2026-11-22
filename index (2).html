@@ -1,0 +1,612 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Hof University Library</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Inter:opsz,wght@14..32,300..600&display=swap" rel="stylesheet">
+
+<style>
+/* Layout idea: one quiet screen, type carries everything; a faint line drawing of shelves sits behind like a watermark. Inner pages are a single narrow column with hairline rules. */
+:root{
+  --bg:#f5f5f7;
+  --ink:#1d1d1f;
+  --muted:#6e6e73;
+  --hair:#d9dcdf;
+  --accent:#2c5a4a;
+  --wash:#eceeee;
+  --display:-apple-system, BlinkMacSystemFont, "SF Pro Display", "Inter", "Helvetica Neue", Arial, sans-serif;
+  --body:-apple-system, BlinkMacSystemFont, "SF Pro Text", "Inter", "Helvetica Neue", Arial, sans-serif;
+  --blue:#2860f8;
+  --hof-blue:#2860f8; --hof-green:#0ad88e; --hof-yellow:#fccd00; --hof-red:#fe3c4e; --hof-black:#010101;
+  color-scheme:light;
+}
+@media (prefers-color-scheme: dark){
+  :root:not([data-theme="light"]){ --bg:#111315; --ink:#e9eaea; --muted:#8d9399; --hair:#2b2f33; --accent:#8fc2ac; --wash:#1a1d20; color-scheme:dark; }
+}
+:root[data-theme="dark"]{ --bg:#111315; --ink:#e9eaea; --muted:#8d9399; --hair:#2b2f33; --accent:#8fc2ac; --wash:#1a1d20; color-scheme:dark; }
+
+*{box-sizing:border-box}
+html,body{margin:0;height:100%}
+body{background:var(--bg);color:var(--ink);font-family:var(--body);font-weight:400;font-size:17px;line-height:1.47;letter-spacing:-.022em;font-feature-settings:"cv11","ss01";font-optical-sizing:auto;-webkit-font-smoothing:antialiased}
+a{color:inherit}
+:focus-visible{outline:1px solid var(--accent);outline-offset:4px}
+h1,h2,h3{font-family:var(--display);font-weight:600;letter-spacing:-.025em;margin:0;text-wrap:balance;line-height:1.05}
+p{margin:0;max-width:62ch}
+button{font:inherit;color:inherit}
+.view{display:none}
+.view.on{display:block}
+
+/* ---------- Landing ---------- */
+#home{position:relative;min-height:100svh;overflow:hidden;background:#fff}
+#home.on{display:flex;flex-direction:column}
+.bgwrap{position:absolute;inset:0;overflow:hidden}
+#photo,#shelves{position:absolute;inset:-16px;width:calc(100% + 32px);height:calc(100% + 32px);object-fit:cover}
+#photo{display:none;object-position:50% 38%;filter:blur(.6px) saturate(.9)}
+#photo.has{display:block}
+#photo.has ~ #shelves{display:none}
+#shelves{filter:blur(7px) saturate(.8)}
+/* photo breathes at the top, white only where text and tiles sit */
+.veil{position:absolute;inset:0;background:
+  radial-gradient(ellipse 60% 42% at 50% 44%,rgba(255,255,255,.80) 0%,rgba(255,255,255,.45) 60%,rgba(255,255,255,0) 100%),
+  linear-gradient(180deg,rgba(255,255,255,.30) 0%,rgba(255,255,255,.22) 35%,rgba(255,255,255,.55) 62%,rgba(245,245,247,.96) 86%)}
+.gnav{position:relative;z-index:2;display:flex;justify-content:space-between;align-items:center;gap:16px;padding:0 clamp(16px,4vw,48px);height:52px;font-size:.78rem;letter-spacing:-.01em;color:#1d1d1f;background:rgba(255,255,255,.62);backdrop-filter:saturate(180%) blur(20px);-webkit-backdrop-filter:saturate(180%) blur(20px);border-bottom:1px solid rgba(0,0,0,.06)}
+.gnav b{font-weight:500;font-size:.85rem}
+.gnav nav{display:flex;gap:24px}
+.gnav a{text-decoration:none;opacity:.8}
+.gnav a:hover{opacity:1}
+.hero{position:relative;z-index:1;flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;text-align:center;gap:10px;padding:64px 20px 36px;color:#1d1d1f}
+.status{display:inline-flex;align-items:center;gap:10px;padding:7px 14px 7px 12px;border-radius:999px;background:rgba(255,255,255,.75);backdrop-filter:blur(16px);-webkit-backdrop-filter:blur(16px);font-size:.88rem;font-weight:500;letter-spacing:-.01em;box-shadow:0 1px 3px rgba(0,0,0,.06)}
+.status .dot{width:9px;height:9px;border-radius:50%;background:#2f9e5b;box-shadow:0 0 0 0 rgba(47,158,91,.5);animation:pulse 2.4s infinite}
+.status > span:nth-child(2){white-space:nowrap}
+.status .sub{font-weight:400;color:#6e6e73}
+.ribbon{position:relative;z-index:2;overflow:hidden;height:42px;display:flex;align-items:center;background:rgba(255,231,233,.88);backdrop-filter:blur(14px);-webkit-backdrop-filter:blur(14px);border-bottom:1px solid rgba(254,60,78,.22);color:#c52236;
+  -webkit-mask-image:linear-gradient(90deg,transparent 0,#000 8%,#000 92%,transparent 100%);mask-image:linear-gradient(90deg,transparent 0,#000 8%,#000 92%,transparent 100%)}
+.ribbon .track{display:flex;flex:none;width:max-content;animation:drift 45s linear infinite}
+.ribbon:hover .track{animation-play-state:paused}
+.ribbon ul{display:flex;align-items:center;margin:0;padding:0;list-style:none;flex:none}
+.ribbon li{font-size:1rem;font-weight:500;letter-spacing:-.01em;white-space:nowrap;padding:0 22px;position:relative}
+.ribbon li::after{content:"";position:absolute;right:-2px;top:50%;width:4px;height:4px;border-radius:50%;background:rgba(254,60,78,.45);transform:translateY(-50%)}
+@keyframes drift{from{transform:translateX(0)}to{transform:translateX(-25%)}}
+@media (prefers-reduced-motion: reduce){ .ribbon .track{animation:none} .ribbon{justify-content:center} }
+.sr{position:absolute;width:1px;height:1px;overflow:hidden;clip:rect(0 0 0 0);white-space:nowrap}
+@keyframes pulse{0%{box-shadow:0 0 0 0 rgba(47,158,91,.45)}70%{box-shadow:0 0 0 9px rgba(47,158,91,0)}100%{box-shadow:0 0 0 0 rgba(47,158,91,0)}}
+.hero h1{font-size:clamp(3.6rem,10vw,7.5rem);font-weight:600;letter-spacing:-.028em;line-height:1.02;margin-top:16px}
+.hero .tr{font-size:clamp(1.3rem,2.4vw,1.75rem);font-weight:400;color:#6e6e73;letter-spacing:-.015em}
+.hero .tr i{font-style:normal}
+.hero .tr b{font-weight:400;color:#1d1d1f}
+.cta{margin-top:26px;display:inline-flex;align-items:center;gap:8px;background:var(--hof-blue);color:#fff;text-decoration:none;font-weight:400;font-size:1.06rem;letter-spacing:-.02em;padding:12px 24px;border-radius:980px;transition:transform .3s cubic-bezier(.2,.8,.2,1),background .3s}
+.cta:hover{background:#1f53e6}
+.cta:focus-visible{outline:2px solid var(--blue);outline-offset:3px}
+.cta small{font-weight:400;opacity:.75;font-size:.92rem}
+.tiles{position:relative;z-index:1;display:grid;grid-template-columns:repeat(4,1fr);gap:12px;padding:0 clamp(16px,4vw,48px) 22px;max-width:1280px;width:100%;margin:0 auto}
+.tile{display:grid;grid-template-columns:auto 1fr auto;align-items:center;gap:4px 14px;padding:18px 20px;border-radius:18px;text-decoration:none;color:#1d1d1f;background:rgba(255,255,255,.80);backdrop-filter:saturate(180%) blur(24px);-webkit-backdrop-filter:saturate(180%) blur(24px);border:1px solid rgba(255,255,255,.8);border-bottom:3px solid var(--c);box-shadow:0 1px 4px rgba(0,0,0,.04),0 10px 28px rgba(0,0,0,.07);transition:transform .3s cubic-bezier(.2,.8,.2,1),box-shadow .3s,background .3s}
+.tile:hover{background:rgba(255,255,255,.92)}
+.tile:hover{transform:translateY(-3px);box-shadow:0 3px 8px rgba(0,0,0,.05),0 18px 40px rgba(0,0,0,.10)}
+.tile:focus-visible{outline:2px solid var(--blue);outline-offset:3px}
+.tile .ic{grid-row:1 / span 2;width:40px;height:40px;padding:9px;border-radius:5px;background:var(--c);color:var(--on,#fff);box-sizing:border-box}
+.t-blue{--c:var(--hof-blue)} .t-green{--c:var(--hof-green);--on:#06291c} .t-yellow{--c:var(--hof-yellow);--on:#1d1d1f} .t-red{--c:var(--hof-red)}
+.tile h2{font-size:1.06rem;font-weight:600;letter-spacing:-.02em;line-height:1.2}
+.tile p{grid-column:2;color:#6e6e73;font-size:.88rem;font-weight:400;line-height:1.3}
+.tile .chev{grid-row:1 / span 2;grid-column:3;color:#86868b;font-size:1.2rem;font-weight:400;transition:transform .3s}
+.tile:hover .chev{transform:translateX(3px);color:#1d1d1f}
+.legal{position:relative;z-index:1;text-align:center;font-size:.75rem;font-weight:400;color:#6e6e73;padding:0 20px 18px}
+@media (max-width:980px){ .tiles{grid-template-columns:repeat(2,1fr)} .gnav nav{gap:16px} }
+@media (max-width:640px){ .status{flex-wrap:wrap;justify-content:center;gap:4px 8px;font-size:.85rem;border-radius:16px;max-width:92%} .tiles{grid-template-columns:1fr} .gnav nav{display:none} .hero{padding-top:40px} }
+@media (prefers-reduced-motion: reduce){ .status .dot{animation:none} }
+
+/* ---------- Inner pages ---------- */
+.bar{position:sticky;top:0;z-index:5;background:color-mix(in srgb,var(--bg) 88%,transparent);backdrop-filter:blur(6px);display:flex;justify-content:space-between;align-items:center;padding:16px clamp(16px,5vw,64px);font-size:.85rem;color:var(--muted)}
+.bar a{text-decoration:none}
+.bar a:hover{color:var(--ink)}
+.col{max-width:700px;margin:0 auto;padding:24px 20px 96px;display:flex;flex-direction:column;gap:36px}
+.kicker{font-size:.78rem;letter-spacing:.14em;text-transform:uppercase;color:var(--muted)}
+.col h1{font-size:clamp(2.6rem,6vw,4rem)}
+.col h2{font-size:clamp(2rem,5vw,3rem)}
+.col h3{font-size:1.5rem}
+.de{font-style:italic;color:var(--accent)}
+.lede{font-size:1.08rem}
+.note{color:var(--muted);font-size:.92rem}
+dl.facts{margin:0;border-top:1px solid var(--hair)}
+dl.facts div{display:grid;grid-template-columns:minmax(120px,190px) 1fr;gap:16px;padding:14px 0;border-bottom:1px solid var(--hair)}
+dl.facts dt{color:var(--muted);font-size:.9rem}
+dl.facts dd{margin:0}
+ol.steps{margin:0;padding:0;list-style:none;counter-reset:s;display:flex;flex-direction:column;border-top:1px solid var(--hair)}
+ol.steps li{counter-increment:s;display:grid;grid-template-columns:40px 1fr;padding:14px 0;border-bottom:1px solid var(--hair)}
+ol.steps li::before{content:counter(s);font-weight:600;font-size:1.1rem;color:var(--accent);line-height:1.2}
+.link{background:none;border:0;padding:0;cursor:pointer;text-decoration:underline;text-underline-offset:4px;text-decoration-thickness:1px}
+.link:hover{color:var(--accent)}
+.pager{display:flex;justify-content:space-between;gap:12px;border-top:1px solid var(--hair);padding-top:20px}
+.pager .link[disabled]{visibility:hidden}
+
+/* tour progress */
+.ticks{display:flex;gap:6px}
+.ticks button{all:unset;cursor:pointer;width:22px;height:14px;display:grid;place-items:center}
+.ticks button::after{content:"";width:100%;height:1px;background:var(--hair);transition:background .3s,height .3s}
+.ticks button.seen::after{background:var(--muted)}
+.ticks button.now::after{background:var(--accent);height:3px}
+.ticks button:focus-visible{outline:1px solid var(--accent)}
+.stop{display:none;flex-direction:column;gap:32px}
+.stop.on{display:flex}
+
+/* quiet instruments */
+.inst{border:1px solid var(--hair);padding:20px;display:flex;flex-direction:column;gap:14px}
+.inst-label{font-size:.75rem;letter-spacing:.14em;text-transform:uppercase;color:var(--muted)}
+label{font-size:.85rem;color:var(--muted)}
+input,select{font:inherit;font-weight:400;padding:8px 0;border:0;border-bottom:1px solid var(--hair);background:transparent;color:var(--ink);width:100%;border-radius:0}
+input:focus,select:focus{outline:none;border-bottom-color:var(--accent)}
+.row{display:flex;flex-wrap:wrap;gap:18px;align-items:flex-end}
+.row>div{display:flex;flex-direction:column;gap:2px;flex:1 1 170px}
+.go{background:var(--ink);color:var(--bg);border:0;padding:10px 18px;cursor:pointer;font-weight:400}
+.go:hover{background:var(--accent)}
+.out{border-left:2px solid var(--hair);padding:4px 0 4px 14px}
+.out.ok{border-left-color:var(--accent)}
+.out.no{border-left-color:#b4533f}
+.out b{font-weight:500;display:block}
+.hit{display:grid;grid-template-columns:1fr auto;gap:4px 16px;align-items:center;padding:12px 0;border-bottom:1px solid var(--hair)}
+.hit .m{font-size:.85rem;color:var(--muted)}
+.mono{font-family:ui-monospace,Menlo,monospace;font-size:.85rem}
+.state{font-size:.82rem}
+.state.av{color:var(--accent)} .state.lo{color:#a26a1a}
+.lights{display:flex;gap:18px}
+.lt{all:unset;cursor:pointer;display:flex;align-items:center;gap:8px;font-size:.92rem}
+.lt i{width:12px;height:12px;border-radius:50%;display:inline-block}
+.lt[aria-pressed="true"]{text-decoration:underline;text-underline-offset:4px}
+.lt:focus-visible{outline:1px solid var(--accent);outline-offset:4px}
+
+/* glossary */
+.gloss{display:grid;grid-template-columns:repeat(auto-fill,minmax(180px,1fr));border-top:1px solid var(--hair)}
+.w{all:unset;cursor:pointer;padding:14px 0;border-bottom:1px solid var(--hair);display:flex;flex-direction:column;gap:2px}
+.w .g{font-weight:600;font-size:1.2rem}
+.w .e{color:var(--muted);font-size:.88rem;visibility:hidden}
+.w.open .e{visibility:visible}
+.w:focus-visible{outline:1px solid var(--accent)}
+
+/* quiz + faq */
+.q{display:flex;flex-direction:column;gap:8px;padding:16px 0;border-bottom:1px solid var(--hair)}
+.q .opts{display:flex;flex-direction:column;gap:2px}
+.opt{all:unset;cursor:pointer;padding:4px 0;color:var(--muted)}
+.opt:hover{color:var(--ink)}
+.opt.right{color:var(--accent);font-weight:500}
+.opt.wrong{text-decoration:line-through}
+.opt:focus-visible{outline:1px solid var(--accent)}
+.q .fb{display:none;font-size:.9rem}
+.q.done .fb{display:block}
+details{border-bottom:1px solid var(--hair)}
+.faq{border-top:1px solid var(--hair)}
+summary{cursor:pointer;list-style:none;padding:18px 0;display:flex;justify-content:space-between;gap:16px;font-weight:600;font-size:1.15rem;line-height:1.3}
+summary::-webkit-details-marker{display:none}
+summary::after{content:"+";font-family:var(--body);color:var(--muted);transition:transform .3s}
+details[open] summary::after{transform:rotate(45deg)}
+details .a{padding:0 0 20px;display:flex;flex-direction:column;gap:8px}
+.two{display:grid;grid-template-columns:1fr 1fr;gap:40px}
+@media (max-width:700px){ .two{grid-template-columns:1fr} dl.facts div{grid-template-columns:1fr;gap:2px} }
+@media (prefers-reduced-motion: reduce){ *{transition:none!important} }
+</style>
+</head>
+<body>
+
+<!-- ================= LANDING ================= -->
+<section class="view" id="home" aria-label="Hof University Library">
+  <div class="bgwrap" aria-hidden="true">
+    <!-- Interior photo: set src to the library photo. It is shown under a light veil. -->
+    <img id="photo" class="has" alt="" src="library.jpg">
+    <canvas id="shelves"></canvas>
+    <div class="veil"></div>
+  </div>
+  <header class="gnav">
+    <b>Hof University Library</b>
+    <nav aria-label="Sections"><a href="#welcome">Tour</a><a href="#borrow-return">Borrow &amp; Return</a><a href="#digital">E-resources</a><a href="https://www.hof-university.com/room-reservation-in-the-library.html">Rooms</a><a href="#faq">Questions</a></nav>
+  </header>
+  <div class="ribbon" aria-label="Welcome"><div class="track" aria-hidden="true"><ul><li lang="de">Hallo</li><li lang="en">Hello</li><li lang="fr">Bonjour</li><li lang="es">Hola</li><li lang="hi">नमस्ते</li><li lang="zh">你好</li><li lang="tr">Merhaba</li><li lang="vi">Xin chào</li><li lang="ar" dir="rtl">مرحبا</li><li lang="it">Ciao</li><li lang="ru">Привет</li><li lang="pt">Olá</li><li lang="ko">안녕하세요</li><li lang="ja">こんにちは</li><li lang="de">Servus</li></ul><ul><li lang="de">Hallo</li><li lang="en">Hello</li><li lang="fr">Bonjour</li><li lang="es">Hola</li><li lang="hi">नमस्ते</li><li lang="zh">你好</li><li lang="tr">Merhaba</li><li lang="vi">Xin chào</li><li lang="ar" dir="rtl">مرحبا</li><li lang="it">Ciao</li><li lang="ru">Привет</li><li lang="pt">Olá</li><li lang="ko">안녕하세요</li><li lang="ja">こんにちは</li><li lang="de">Servus</li></ul><ul><li lang="de">Hallo</li><li lang="en">Hello</li><li lang="fr">Bonjour</li><li lang="es">Hola</li><li lang="hi">नमस्ते</li><li lang="zh">你好</li><li lang="tr">Merhaba</li><li lang="vi">Xin chào</li><li lang="ar" dir="rtl">مرحبا</li><li lang="it">Ciao</li><li lang="ru">Привет</li><li lang="pt">Olá</li><li lang="ko">안녕하세요</li><li lang="ja">こんにちは</li><li lang="de">Servus</li></ul><ul><li lang="de">Hallo</li><li lang="en">Hello</li><li lang="fr">Bonjour</li><li lang="es">Hola</li><li lang="hi">नमस्ते</li><li lang="zh">你好</li><li lang="tr">Merhaba</li><li lang="vi">Xin chào</li><li lang="ar" dir="rtl">مرحبا</li><li lang="it">Ciao</li><li lang="ru">Привет</li><li lang="pt">Olá</li><li lang="ko">안녕하세요</li><li lang="ja">こんにちは</li><li lang="de">Servus</li></ul></div></div>
+  <div class="hero">
+    <div class="status" id="status" aria-live="polite"><span class="dot" aria-hidden="true"></span><span>Open 24×7</span><span class="sub" id="statusSub">Service desk hours on the library page</span></div>
+    <h1 lang="de">Bibliothek</h1>
+    <p class="tr"><i>the library</i> · <b>Hochschule Hof</b></p>
+    <a class="cta" href="#welcome">Take the library tour <small>15 min</small> ›</a>
+  </div>
+  <div class="tiles">
+    <a class="tile t-blue" href="#borrow-return">
+      <svg class="ic" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 5.5A1.5 1.5 0 015.5 4H11v16H5.5A1.5 1.5 0 014 18.5z"/><path d="M13 4h5.5A1.5 1.5 0 0120 5.5v13a1.5 1.5 0 01-1.5 1.5H13z"/></svg>
+      <h2>Borrow &amp; return</h2><p>Renewals and due dates</p><span class="chev" aria-hidden="true">›</span>
+    </a>
+    <a class="tile t-green" href="#digital">
+      <svg class="ic" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><ellipse cx="12" cy="6" rx="7" ry="2.5"/><path d="M5 6v6c0 1.4 3.1 2.5 7 2.5s7-1.1 7-2.5V6"/><path d="M5 12v6c0 1.4 3.1 2.5 7 2.5s7-1.1 7-2.5v-6"/></svg>
+      <h2>E-resources</h2><p>Databases and e-books</p><span class="chev" aria-hidden="true">›</span>
+    </a>
+    <a class="tile t-yellow" href="https://www.hof-university.com/room-reservation-in-the-library.html">
+      <svg class="ic" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="4" y="5" width="16" height="15" rx="2"/><path d="M4 10h16M9 3v4M15 3v4"/></svg>
+      <h2>Rooms</h2><p>Book a group room</p><span class="chev" aria-hidden="true">›</span>
+    </a>
+    <a class="tile t-red" href="#faq">
+      <svg class="ic" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="9"/><path d="M9.6 9.3a2.5 2.5 0 014.8.9c0 1.7-2.4 2.1-2.4 3.6"/><path d="M12 16.8v.2"/></svg>
+      <h2>Questions</h2><p>What new students ask</p><span class="chev" aria-hidden="true">›</span>
+    </a>
+  </div>
+  <div class="legal">Hof · Münchberg · bibliothek@hof-university.de</div>
+</section>
+
+<!-- ================= TOUR ================= -->
+<section class="view" id="tour">
+  <div class="bar"><a href="#home">← Library</a><div class="ticks" id="ticks" aria-label="Tour progress"></div><span id="count">1 / 9</span></div>
+  <div class="col">
+
+    <article class="stop" id="welcome">
+      <div class="kicker">Stop 1 · <span class="de">Willkommen</span></div>
+      <h1>A library with a new engine</h1>
+      <p class="lede">On 17 November 2026 the library moved to a new system, FOLIO, with a new catalogue at <a href="https://katalog.hof-university.de">katalog.hof-university.de</a>. Everyone is learning it right now. You start at the same point as everyone else.</p>
+      <dl class="facts">
+        <div><dt>Hof</dt><dd>Building A, Alfons-Goppel-Platz 1<br>Staffed Mon–Thu 08:00–18:00, Fri 08:00–15:00</dd></div>
+        <div><dt>Münchberg</dt><dd>Kulmbacher Str. 76<br>Staffed Mon, Wed, Thu 09:00–14:00 · Tue 09:00–12:00, 12:30–16:00 · Fri closed</dd></div>
+        <div><dt>Any hour</dt><dd>Both open 24/7 with your CampusCard</dd></div>
+      </dl>
+      <p class="note" id="sessionLine">New-catalogue session in English: 23 Nov 2026, 15:00–15:15, online, no registration. <a href="https://hof-university.zoom-x.de/j/62902581443">Join on Zoom</a></p>
+    </article>
+
+    <article class="stop" id="card">
+      <div class="kicker">Stop 2 · <span class="de">Bibliotheksausweis</span></div>
+      <h1>Your CampusCard is your library card</h1>
+      <p class="lede">No separate registration. The card opens the doors at any hour and lets you borrow. The library number printed on it is your catalogue username.</p>
+      <dl class="facts">
+        <div><dt>Lost it</dt><dd>Report it at once, so nobody borrows on your account</dd></div>
+        <div><dt>Moved</dt><dd>Tell the library: late reminders 3 and 4 come by registered post</dd></div>
+        <div><dt>At night</dt><dd>The doors only open with your card</dd></div>
+      </dl>
+    </article>
+
+    <article class="stop" id="catalogue">
+      <div class="kicker">Stop 3 · <span class="de">Katalog</span></div>
+      <h1>Log in, then find a book</h1>
+      <p class="lede">First visit: you have no password yet. Choose <span class="de">Passwort vergessen</span>, enter your library number, and set one from the email. Practise here; nothing is sent.</p>
+      <div class="inst">
+        <div class="inst-label">Practice · log in</div>
+        <form id="loginForm" class="row">
+          <div><label for="simUser">Benutzername</label><input id="simUser" autocomplete="off"></div>
+          <div><label for="simPass">Passwort</label><input id="simPass" type="password" autocomplete="off"></div>
+          <div style="flex:0 0 auto"><button class="go" type="submit">Log in</button></div>
+        </form>
+        <button class="link" id="forgotBtn" type="button" style="align-self:flex-start">Passwort vergessen</button>
+        <div id="loginMsg" class="out" hidden></div>
+      </div>
+      <div class="inst">
+        <div class="inst-label">Practice · read a result</div>
+        <div class="row"><div><label for="scope">Search in</label><select id="scope"><option value="local">Hof University only</option><option value="by">Whole Bavarian network</option></select></div></div>
+        <div id="hits"></div>
+        <div id="holdMsg" class="out" hidden></div>
+        <p class="note">Sample records. <span class="de">verfügbar</span> available · <span class="de">ausgeliehen</span> on loan · <span class="de">Signatur</span> shelf mark</p>
+      </div>
+    </article>
+
+    <article class="stop" id="borrow">
+      <div class="kicker">Stop 4 · <span class="de">Ausleihe</span></div>
+      <h1>Generous rules, if you know them</h1>
+      <dl class="facts">
+        <div><dt>Loan period</dt><dd>4 weeks, shorter in exam periods</dd></div>
+        <div><dt>At once</dt><dd>Up to 50 items</dd></div>
+        <div><dt>Renewals</dt><dd>6 automatic, 4 weeks each, unless someone reserves it</dd></div>
+        <div><dt>Holds</dt><dd>Wait 5 opening days at the information desk</dd></div>
+        <div><dt>Late</dt><dd>Fees apply. Reminders 1–2 by email, 3–4 by registered post</dd></div>
+      </dl>
+      <p><a href="#borrow-return">How to borrow and return, step by step →</a></p>
+    </article>
+
+    <article class="stop" id="digital">
+      <div class="kicker">Stop 5 · <span class="de">E-Medien</span></div>
+      <h1>Most research is digital</h1>
+      <p class="lede">E-books sit in the catalogue. Databases live in <a href="https://dbis.ur.de/FHBHO/">DBIS</a>. E-journals live in the EZB, which marks access with three colours.</p>
+      <div class="inst">
+        <div class="inst-label">What does the colour mean?</div>
+        <div class="lights" role="group" aria-label="EZB colours">
+          <button class="lt" data-l="g" aria-pressed="false"><i style="background:#3f8f5f"></i>Green</button>
+          <button class="lt" data-l="y" aria-pressed="false"><i style="background:#d6a21e"></i>Yellow</button>
+          <button class="lt" data-l="r" aria-pressed="false"><i style="background:#b4533f"></i>Red</button>
+        </div>
+        <div id="lightOut" class="out">Choose a colour.</div>
+      </div>
+      <p class="note">Before paying for any article, check here first.</p>
+    </article>
+
+    <article class="stop" id="spaces">
+      <div class="kicker">Stop 6 · <span class="de">Lernräume</span></div>
+      <h1>A place to think</h1>
+      <dl class="facts">
+        <div><dt>Hof</dt><dd>2 reading rooms, 10 PCs, an open group room, 2 bookable group rooms (2–8 people), 4 bookable carrels, lockers in staffed hours</dd></div>
+        <div><dt>Münchberg</dt><dd>Reading seats and PCs, no booking</dd></div>
+        <div><dt>Scan &amp; print</dt><dd>At both sites. Bring a USB stick for scans</dd></div>
+      </dl>
+      <div class="inst">
+        <div class="inst-label">Will this room booking work?</div>
+        <div class="row">
+          <div><label for="bHours">Hours</label><input type="number" id="bHours" min="1" max="12" value="3"></div>
+          <div><label for="bAhead">Days ahead</label><input type="number" id="bAhead" min="0" max="60" value="7"></div>
+          <div><label for="bWeek">Booked this week</label><input type="number" id="bWeek" min="0" max="10" value="1"></div>
+        </div>
+        <div id="bookOut" class="out"></div>
+      </div>
+      <p><a href="https://www.hof-university.de/raumreservierung.html">Book a room</a></p>
+    </article>
+
+    <article class="stop" id="beyond">
+      <div class="kicker">Stop 7 · <span class="de">Fernleihe</span></div>
+      <h1>When Hof does not have it</h1>
+      <p class="lede">Search the Bavarian network and order through interlibrary loan. Books are free for students; article copies can arrive by email.</p>
+      <dl class="facts">
+        <div><dt>Citavi</dt><dd>Free campus licence, Windows. Register with your university email</dd></div>
+        <div><dt>Zotero</dt><dd>Free, any system, with a browser plugin</dd></div>
+      </dl>
+      <p class="note">Choose a reference manager in week one, not thesis week.</p>
+    </article>
+
+    <article class="stop" id="german">
+      <div class="kicker">Stop 8 · <span class="de">Wortschatz</span></div>
+      <h1>Sixteen words</h1>
+      <p class="lede">Guess, then tap. <span id="glossCount"></span></p>
+      <div class="gloss" id="gloss"></div>
+    </article>
+
+    <article class="stop" id="check">
+      <div class="kicker">Stop 9 · <span class="de">Los geht's</span></div>
+      <h1>Five questions</h1>
+      <div id="quiz"></div>
+      <div id="score" class="out"></div>
+      <p class="note">Stuck later? Online drop-in, Tuesdays and Thursdays 13:00–13:30, link on the library page. Or bibliothek@hof-university.de</p>
+    </article>
+
+    <div class="pager"><button class="link" id="prev" type="button">← Previous</button><button class="link" id="next" type="button">Next →</button></div>
+  </div>
+</section>
+
+<!-- ================= BORROW / RETURN ================= -->
+<section class="view" id="borrow-return">
+  <div class="bar"><a href="#home">← Library</a><span>Borrow, renew, return</span></div>
+  <div class="col">
+    <div class="kicker"><span class="de">Ausleihe</span> · <span class="de">Verlängerung</span> · <span class="de">Rückgabe</span></div>
+    <h1>Borrow, renew or return a book</h1>
+    <div class="two">
+      <div style="display:flex;flex-direction:column;gap:16px">
+        <h3>Borrow</h3>
+        <ol class="steps">
+          <li><span>Find it in the <a href="https://katalog.hof-university.de">catalogue</a> and note its <span class="de">Signatur</span></span></li>
+          <li><span>Take it from the shelf</span></li>
+          <li><span>Use the self-check terminal with your CampusCard, or the desk in staffed hours</span></li>
+          <li><span>Watch your university email for the due-date reminder</span></li>
+        </ol>
+      </div>
+      <div style="display:flex;flex-direction:column;gap:16px">
+        <h3>Return</h3>
+        <ol class="steps">
+          <li><span>Self-check terminal inside, or</span></li>
+          <li><span>The return boxes outside the library, at any hour</span></li>
+          <li><span>Check your account in the catalogue to confirm it is gone</span></li>
+        </ol>
+      </div>
+    </div>
+    <div style="display:flex;flex-direction:column;gap:16px">
+      <h3>Renew</h3>
+      <ol class="steps">
+        <li><span>Students: loans renew automatically, 4 weeks at a time, up to 6 times</span></li>
+        <li><span>Renewal stops if someone places a hold (<span class="de">Vormerkung</span>). Then return by the due date</span></li>
+        <li><span>Check current due dates in your account in the <a href="https://katalog.hof-university.de">catalogue</a></span></li>
+      </ol>
+    </div>
+    <div class="inst">
+      <div class="inst-label">When is it due?</div>
+      <div class="row">
+        <div><label for="borrowDate">Borrowed on</label><input type="date" id="borrowDate"></div>
+        <div><label for="reserved">Reserved by someone?</label><select id="reserved"><option value="no">No</option><option value="yes">Yes</option></select></div>
+      </div>
+      <div id="dueOut" class="out ok"></div>
+      <p class="note">Estimate only. Exam periods are shorter; your catalogue account shows the real date.</p>
+    </div>
+  </div>
+</section>
+
+<!-- ================= FAQ ================= -->
+<section class="view" id="faq">
+  <div class="bar"><a href="#home">← Library</a><span>Questions</span></div>
+  <div class="col">
+    <div class="kicker"><span class="de">Häufige Fragen</span></div>
+    <h1>Questions</h1>
+    <div class="faq" id="faqList"></div>
+    <p class="note">Facts from the <a href="https://www.hof-university.de/studium/services-fuer-studierende/bibliothek.html">library website</a>, 21 Nov 2026. The website and catalogue are the official source. Hof 09281 409-3444 · Münchberg 09281 409-8444 · bibliothek@hof-university.de</p>
+  </div>
+</section>
+
+<script>
+(function(){
+  const store={get(k){try{return JSON.parse(localStorage.getItem("hoflib2_"+k))}catch(e){return null}},set(k,v){try{localStorage.setItem("hoflib2_"+k,JSON.stringify(v))}catch(e){}}};
+  const views=[...document.querySelectorAll(".view")];
+  const stops=[...document.querySelectorAll(".stop")];
+  const ticks=document.getElementById("ticks");
+  let seen=new Set(store.get("seen")||[]), cur=0;
+
+  stops.forEach((s,i)=>{const b=document.createElement("button");b.type="button";b.setAttribute("aria-label","Stop "+(i+1));b.onclick=()=>go(i);ticks.appendChild(b);});
+
+  function view(id){views.forEach(v=>v.classList.toggle("on",v.id===id)); if(id==="home") drawShelves();}
+  function show(i){
+    cur=Math.max(0,Math.min(stops.length-1,i)); seen.add(cur); store.set("seen",[...seen]);
+    stops.forEach((s,j)=>s.classList.toggle("on",j===cur));
+    [...ticks.children].forEach((b,j)=>{b.classList.toggle("now",j===cur);b.classList.toggle("seen",seen.has(j));});
+    document.getElementById("count").textContent=(cur+1)+" / "+stops.length;
+    document.getElementById("prev").disabled=cur===0;
+    const n=document.getElementById("next");
+    n.textContent=cur===stops.length-1?"Back to library →":"Next →";
+  }
+  function go(i){ location.hash=stops[i].id; }
+  document.getElementById("prev").onclick=()=>go(cur-1);
+  document.getElementById("next").onclick=()=>{ if(cur===stops.length-1) location.hash="home"; else go(cur+1); };
+
+  function route(){
+    const h=location.hash.slice(1);
+    const si=stops.findIndex(s=>s.id===h);
+    if(si>=0){view("tour");show(si);}
+    else if(h==="borrow-return"||h==="faq"){view(h);}
+    else view("home");
+    window.scrollTo(0,0);
+  }
+  window.addEventListener("hashchange",route);
+
+  /* Landing drawing: shelves in elevation, fine strokes, seeded so it never jumps */
+  const cv=document.getElementById("shelves");
+  function rnd(seed){return()=>{seed=(seed*16807)%2147483647;return(seed-1)/2147483646;};}
+  function drawShelves(){
+    const r=cv.getBoundingClientRect(); if(!r.width) return;
+    const dpr=Math.min(window.devicePixelRatio||1,2); cv.width=r.width*dpr; cv.height=r.height*dpr;
+    const c=cv.getContext("2d"); c.scale(dpr,dpr);
+    const W=r.width,H=r.height,R=rnd(11);
+    // warm ceiling light falling into a room
+    const g=c.createLinearGradient(0,0,0,H); g.addColorStop(0,"#efe9df"); g.addColorStop(1,"#d9d3c9"); c.fillStyle=g; c.fillRect(0,0,W,H);
+    const pal=["#7d8b8f","#a99b84","#5e6b73","#b9a58a","#8c7a6b","#c9c1b3","#6d7a6a","#9aa4a8","#b5876b","#e2dccf","#4f5b63"];
+    const shelfH=Math.max(110,H/4.6), unit=Math.max(260,W/5);
+    for(let ux=-20;ux<W+unit;ux+=unit){
+      for(let y=shelfH*.35;y<H+shelfH;y+=shelfH){
+        let x=ux+14;
+        while(x<ux+unit-14){
+          const bw=8+R()*16, bh=shelfH*(.58+R()*.32);
+          if(R()<.05){x+=18+R()*30;continue;}
+          c.fillStyle=pal[Math.floor(R()*pal.length)]; c.fillRect(x,y-bh,bw,bh);
+          c.fillStyle="rgba(255,255,255,.18)"; c.fillRect(x+bw*.15,y-bh*.8,bw*.12,bh*.5);
+          x+=bw+1.5;
+        }
+        c.fillStyle="#cbbfae"; c.fillRect(ux,y,unit,10);
+        c.fillStyle="rgba(0,0,0,.12)"; c.fillRect(ux,y+10,unit,6);
+      }
+      c.fillStyle="#bfb2a0"; c.fillRect(ux-8,0,14,H);
+    }
+    // light bloom from windows
+    const b=c.createRadialGradient(W*.7,H*.15,0,W*.7,H*.15,W*.6); b.addColorStop(0,"rgba(255,252,244,.85)"); b.addColorStop(1,"rgba(255,252,244,0)");
+    c.fillStyle=b; c.fillRect(0,0,W,H);
+  }
+  let rt; window.addEventListener("resize",()=>{clearTimeout(rt);rt=setTimeout(()=>{if(document.getElementById("home").classList.contains("on"))drawShelves();},150);});
+  
+
+  if(new Date()>new Date("2026-11-23T15:15:00+01:00")){
+    document.getElementById("sessionLine").innerHTML='Short sessions on the new catalogue run regularly. See the <a href="https://www.hof-university.de/studium/services-fuer-studierende/bibliothek.html">library page</a> for the next English date.';
+  }
+
+  /* Live status: building is 24/7 for card holders; staffed hours in Hof */
+  function berlinNow(){
+    const parts=new Intl.DateTimeFormat("en-GB",{timeZone:"Europe/Berlin",weekday:"short",hour:"2-digit",minute:"2-digit",hour12:false}).formatToParts(new Date());
+    const get=t=>parts.find(p=>p.type===t).value;
+    const days={Mon:1,Tue:2,Wed:3,Thu:4,Fri:5,Sat:6,Sun:0};
+    return {d:days[get("weekday")],m:(+get("hour")%24)*60+ +get("minute")};
+  }
+  const staffed={1:[480,1080],2:[480,1080],3:[480,1080],4:[480,1080],5:[480,900]};
+  const dn=["Sunday","Monday","Tuesday","Wednesday","Thursday","Friday","Saturday"];
+  const hhmm=m=>String(Math.floor(m/60)).padStart(2,"0")+":"+String(m%60).padStart(2,"0");
+  function statusText(d,m){
+    const t=staffed[d];
+    if(t && m>=t[0] && m<t[1]) return "Service desk open now until "+hhmm(t[1]);
+    for(let i=0;i<8;i++){
+      const dd=(d+i)%7, s=staffed[dd]; if(!s) continue;
+      if(i===0 && m<s[0]) return "Service desk opens today at "+hhmm(s[0]);
+      if(i===1) return "Service desk opens tomorrow at "+hhmm(s[0]);
+      if(i>1) return "Service desk opens "+dn[dd]+" at "+hhmm(s[0]);
+    }
+    return "Service desk hours on the library page";
+  }
+  function tick(){const n=berlinNow();document.getElementById("statusSub").textContent=statusText(n.d,n.m);}
+  tick(); setInterval(tick,60000);
+
+  /* Login practice */
+  function say(el,ok,t,b){el.hidden=false;el.className="out "+(ok?"ok":"no");el.innerHTML="<b>"+t+"</b>"+b;}
+  const lm=document.getElementById("loginMsg");
+  document.getElementById("loginForm").addEventListener("submit",e=>{
+    e.preventDefault();
+    const u=document.getElementById("simUser").value.trim(), p=document.getElementById("simPass").value;
+    if(!u) return say(lm,false,"Enter a username.","It is the library number on your CampusCard.");
+    if(u.includes("@")) return say(lm,false,"That is an email address.","Use the library number from your CampusCard instead.");
+    if(!/^\d{6,}$/.test(u.replace(/\s/g,""))) return say(lm,false,"Use your library number.","The long number on your CampusCard. Try 000012345678.");
+    if(!p) return say(lm,false,"No password yet?","First visit: choose Passwort vergessen.");
+    say(lm,true,"Logged in (practice).","The real catalogue now shows your loans, holds and due dates.");
+  });
+  document.getElementById("forgotBtn").onclick=()=>say(lm,true,"Right first move.","You enter your library number and get an email to set a password.");
+
+  /* Search practice */
+  const rec={local:[["Marketing: Grundlagen für Studium und Praxis","Book · German","QP 600 K92","av"],["Principles of Marketing","Book · English","QP 600 K85","lo"],["Digital Marketing Strategy","E-book · English","online","eb"]],
+             by:[["Principles of Marketing","Book · English · Hof","QP 600 K85","lo"],["International Marketing","Book · English · another Bavarian library","not in Hof","fl"],["Digital Marketing Strategy","E-book · English","online","eb"]]};
+  const hits=document.getElementById("hits"), hm=document.getElementById("holdMsg"), sc=document.getElementById("scope");
+  const lab={av:["verfügbar","Find it"],lo:["ausgeliehen · back in 9 days","Hold"],eb:["online","Open"],fl:["interlibrary loan","Order"]};
+  function renderHits(){
+    hits.innerHTML=""; hm.hidden=true;
+    rec[sc.value].forEach((r,i)=>{const d=document.createElement("div");d.className="hit";
+      d.innerHTML='<div><div>'+r[0]+'</div><div class="m">'+r[1]+' · <span class="mono">'+r[2]+'</span> · <span class="state '+r[3]+'">'+lab[r[3]][0]+'</span></div></div><button class="link" type="button" data-i="'+i+'">'+lab[r[3]][1]+'</button>';
+      hits.appendChild(d);});
+  }
+  hits.addEventListener("click",e=>{const b=e.target.closest("[data-i]");if(!b)return;const r=rec[sc.value][+b.dataset.i];
+    ({av:()=>say(hm,true,"Go to shelf "+r[2]+".","Shelves are ordered by Signatur. Then borrow at the self-check terminal."),
+      lo:()=>say(hm,true,"Hold placed (practice).","You get an email when it is back. It waits 5 opening days at the desk."),
+      eb:()=>say(hm,true,"Opens in your browser.","Off campus, log in with your university account when asked."),
+      fl:()=>say(hm,true,"Ordered (practice).","Free for students. You get an email when it arrives.")})[r[3]]();});
+  sc.onchange=renderHits; renderHits();
+
+  /* EZB colours */
+  const L={g:["Green · free for everyone.","Open access, read from anywhere."],y:["Yellow · licensed by the library.","Read on campus, or from home through the library's external access with your university login."],r:["Red · not licensed.","Do not pay. Order it through interlibrary loan; copies can arrive by email."]};
+  document.querySelectorAll(".lt").forEach(b=>b.onclick=()=>{document.querySelectorAll(".lt").forEach(x=>x.setAttribute("aria-pressed",x===b));const o=document.getElementById("lightOut");o.className="out "+(b.dataset.l==="r"?"no":"ok");o.innerHTML="<b>"+L[b.dataset.l][0]+"</b>"+L[b.dataset.l][1];});
+
+  /* Room booking */
+  const bh=document.getElementById("bHours"),ba=document.getElementById("bAhead"),bw=document.getElementById("bWeek"),bo=document.getElementById("bookOut");
+  function book(){const i=[];const h=+bh.value,a=+ba.value,w=+bw.value;
+    if(!(h>=1))i.push("Enter at least 1 hour.");if(h>5)i.push("Max 5 hours per booking.");if(a>21)i.push("Book at most 21 days ahead.");if(a<0)i.push("Days ahead cannot be negative.");if(w>=2)i.push("2 bookings a week is the maximum.");
+    if(i.length){bo.className="out no";bo.innerHTML="<b>Not possible.</b>"+i.join(" ");}else{bo.className="out ok";bo.innerHTML="<b>That works.</b>Collect the key at the desk within 15 minutes of your start.";}}
+  [bh,ba,bw].forEach(x=>x.oninput=book); book();
+
+  /* Glossary */
+  const words=[["Ausleihe","borrowing"],["Rückgabe","return"],["Leihfrist","loan period"],["Verlängerung","renewal"],["Vormerkung","hold"],["Fernleihe","interlibrary loan"],["Signatur","shelf mark"],["Semesterapparat","course reserve"],["Mahnung","overdue reminder"],["Lesesaal","reading room"],["Zeitschrift","journal"],["Benutzerkonto","your account"],["verfügbar","available"],["ausgeliehen","on loan"],["Bestand","holdings"],["Passwort vergessen","forgot password"]];
+  let rev=new Set(store.get("gloss")||[]);const gl=document.getElementById("gloss"),gc=document.getElementById("glossCount");
+  const gcu=()=>gc.textContent=rev.size+" of 16 revealed.";
+  words.forEach((w,i)=>{const b=document.createElement("button");b.type="button";b.className="w"+(rev.has(i)?" open":"");b.setAttribute("aria-expanded",rev.has(i));
+    b.innerHTML='<span class="g" lang="de">'+w[0]+'</span><span class="e">'+w[1]+'</span>';
+    b.onclick=()=>{const o=b.classList.toggle("open");b.setAttribute("aria-expanded",o);o?rev.add(i):rev.delete(i);store.set("gloss",[...rev]);gcu();};gl.appendChild(b);});
+  gcu();
+
+  /* Quiz */
+  const qs=[["Your catalogue username is",["your university email","the library number on your CampusCard","your enrolment number"],1,"The library number. First time: Passwort vergessen."],
+    ["At 23:00 you can enter the library",["never","with your CampusCard","only on weekdays"],1,"Both sites are open 24/7 for card holders."],
+    ["A journal shows red in the EZB. You",["pay for the article","give up","order it via interlibrary loan"],2,"Red means not licensed. Fernleihe gets it for you."],
+    ["Automatic renewal stops when",["someone reserves the book","you hold 10 items","it is a weekend"],0,"A Vormerkung (hold) ends renewals."],
+    ["Your group room starts at 14:00. You",["just walk in","collect the key by 14:15","email to confirm"],1,"No key within 15 minutes cancels the booking."]];
+  let ans=store.get("quiz")||{};const qz=document.getElementById("quiz"),se=document.getElementById("score");
+  function rq(){qz.innerHTML="";qs.forEach((q,qi)=>{const d=document.createElement("div");d.className="q"+(ans[qi]!=null?" done":"");
+      d.innerHTML='<div>'+(qi+1)+'. '+q[0]+'</div><div class="opts"></div><div class="fb">'+q[3]+'</div>';
+      q[1].forEach((o,oi)=>{const b=document.createElement("button");b.type="button";b.className="opt";b.textContent=o;
+        if(ans[qi]!=null){if(oi===q[2])b.classList.add("right");else if(oi===ans[qi])b.classList.add("wrong");}
+        b.onclick=()=>{ans[qi]=oi;store.set("quiz",ans);rq();};d.querySelector(".opts").appendChild(b);});qz.appendChild(d);});
+    const s=qs.reduce((n,q,i)=>n+(ans[i]===q[2]),0),all=Object.keys(ans).length===qs.length;
+    se.className="out"+(all?(s>=4?" ok":" no"):"");se.innerHTML="<b>"+s+" of 5</b>"+(all?(s>=4?"You are ready.":"Revisit a stop, then change your answer."):"");}
+  rq();
+
+  /* Due date */
+  const bd=document.getElementById("borrowDate"),rs=document.getElementById("reserved"),dO=document.getElementById("dueOut");
+  bd.value=new Date().toISOString().slice(0,10);
+  const add=(d,n)=>{const x=new Date(d);x.setDate(x.getDate()+n);return x;};
+  const f=d=>d.toLocaleDateString("en-GB",{weekday:"short",day:"numeric",month:"long"});
+  function due(){if(!bd.value){dO.innerHTML="Pick a date.";return;}const d=new Date(bd.value+"T12:00:00");
+    dO.className="out "+(rs.value==="yes"?"no":"ok");
+    dO.innerHTML=rs.value==="yes"?"<b>Return by "+f(add(d,28))+".</b>A reservation stops renewal.":"<b>Due "+f(add(d,28))+".</b>With all 6 renewals, up to about "+f(add(d,196))+".";}
+  bd.oninput=due;rs.onchange=due;due();
+
+  /* FAQ */
+  const faq=[
+    ["Do I need to register for a library card?","No. Your CampusCard is your library card from day one."],
+    ["How do I log in to the catalogue the first time?","Use the library number on your CampusCard as username. Choose <i>Passwort vergessen</i> to set a password by email."],
+    ["When is the library open?","Around the clock for students with a CampusCard, at both Hof and Münchberg. Staff are there in Hof Mon–Thu 08:00–18:00 and Fri 08:00–15:00."],
+    ["How long can I keep a book?","4 weeks, renewed automatically up to 6 times, unless someone reserves it. Loan periods are shorter during exams."],
+    ["How many items can I borrow?","Up to 50 at once."],
+    ["What if I return something late?","Fees apply. The first two reminders come by email, the next two by registered post. Read your university email."],
+    ["The book I need is on loan. What now?","Place a hold in the catalogue. You get an email when it is back, and it waits 5 opening days at the information desk."],
+    ["The library does not have my book.","Order it through interlibrary loan (<i>Fernleihe</i>) in the catalogue. Free for students."],
+    ["Can I read e-books and journals from home?","Yes. E-books are in the catalogue; databases in DBIS; journals in the EZB. Off campus, log in with your university account when asked."],
+    ["Can I book a room for group work?","In Hof: 2 group rooms and 4 single carrels. Max 2 bookings a week, 5 hours each, up to 3 weeks ahead. Collect the key within 15 minutes."],
+    ["Who can I ask for help in English?","Online drop-in Tuesdays and Thursdays 13:00–13:30, the desk in staffed hours, or bibliothek@hof-university.de."]
+  ];
+  const fl=document.getElementById("faqList");
+  faq.forEach(([q,a])=>{const d=document.createElement("details");d.innerHTML="<summary>"+q+"</summary><div class='a'><p>"+a+"</p></div>";fl.appendChild(d);});
+
+  route();
+})();
+</script>
+</body>
+</html>
